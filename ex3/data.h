@@ -1,5 +1,5 @@
 #ifndef __DATA_H__
-# define __DATA_H__
+#define __DATA_H__
 
 typedef enum	e_operator
 {
@@ -15,6 +15,7 @@ typedef struct	s_data
   int		nbr2;
   t_operator	operator;
   int		status;
+  int		result;
 }		t_data;
 
 #endif
