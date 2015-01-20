@@ -1,11 +1,10 @@
 #include <stdio.h>
-#include <sys/ipc.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sys/shm.h>
 #include <string.h>
-#include <unistd.h>
+#include <sys/types.h>
+#include <sys/shm.h>
+#include <sys/ipc.h>
 #include "data.h"
 
 int		main()
@@ -54,18 +53,21 @@ int		main()
 	    {
 	    case ADD:
 	      received_data->result = received_data->nbr1 + received_data->nbr2;
+	      break;
 	    case SUB:
 	      received_data->result = received_data->nbr1 - received_data->nbr2;
+	      break;
 	    case MUL:
 	      received_data->result = received_data->nbr1 * received_data->nbr2;
+	      break;
 	    case DIV:
 	      received_data->result = received_data->nbr1 / received_data->nbr2;
+	      break;
 	    }
 	  printf("operation caculated\n");
 	  received_data->status = 0;
 	}
       usleep(500);
     }
-  shmctl(shm_id, IPC_RMID, NULL);
   return (0);
 }

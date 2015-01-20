@@ -2,9 +2,9 @@ CC		= gcc
 
 RM		= rm -f
 
-CFLAGS		+= -Werror -Wall -Wextra
+##CFLAGS		+= -Werror -Wall -Wextra
 
-CFLAGS		+= -ansi -pedantic
+##CFLAGS		+= -ansi -pedantic
 
 CLIENT_SRCS	= client.c
 
