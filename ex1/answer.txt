@@ -1,0 +1,7 @@
+a kernel module is much a part of the kernel as any normal kernel code when it's loaded and it has access to the services of the already loaded modules.
+
+There is two ways to load a kernel module :
+-The first way is to use the insmod command to manually insert the it into the kernel
+-The second is to load the module as it is needed throught kerneld which scheduling the work
+
+To allocate new module ismod asks the kernel for enough space to hold the new kernel using a privileged system call. The kernel allocates a new module data structure and enough kernel memory to hold the new module and puts it at the end of the kernel modules list.

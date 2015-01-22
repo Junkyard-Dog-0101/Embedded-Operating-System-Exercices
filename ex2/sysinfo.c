@@ -17,6 +17,7 @@ static int __init sysinfo_init(void)
 {
   struct sysinfo si;
   si_meminfo(&si);
+
   //  si_meminfo();/
   // char buf[4096];
   //int fd;
