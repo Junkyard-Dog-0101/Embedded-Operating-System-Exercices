@@ -1,5 +1,5 @@
 make
 sudo insmod sysinfo.ko
-dmesg | tail -1
+dmesg
 sudo rmmod sysinfo.ko
 make clean
