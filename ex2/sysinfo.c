@@ -86,87 +86,88 @@ void	get_next_number_pos(char *buf, int *i)
     }
 }
 
-void	get_network_from_netdev(char *buf)
+int	get_network_from_netdev(char *buf, char tab[8][3][32])
 {
+  int	count;
   int	i;
   int	j;
   int	n;
   int	e;
   int	c;
-  char	tab[8][3][64];
 
   i = 0;
-  while (buf[i] != '\n' && buf[i] != '\0')
+  count = 0;
+  while (buf[i] != '\n' && buf[i] != '\0' && i <= 1024)
     {
       ++i;
     }
-  while (buf[i] != '\n' && buf[i] != '\0')
+  ++i;
+  while (buf[i] != '\n' && buf[i] != '\0' && i <= 1024)
     {
       ++i;
     }
-  printk(KERN_INFO "avant grand while\n");
   j = 0;
-  while (buf[i] != '\0')
+  while (buf[i] != '\0' && i <= 1024)
     {
       n = 0;
-      while (buf[i] != '\n' && buf[i] != '\0')
+      while (buf[i] != '\n' && buf[i] != '\0' && i <= 1024)
 	{
 	  if (n == 0)
 	    {
-	      while (buf[i] == ' ' && buf[i] != '\0')
+	      ++count;
+	      while (buf[i] == ' ' && buf[i] != '\0' && i <= 1024)
 		{
 		  ++i;
 		}
 	      e = 0;
-	      memset(tab[j][0], 0, 64);
-	      while (buf[i] != ':' && buf[i] != '\0')
+	      memset(tab[j][0], 0, 32);
+	      while (buf[i] != ':' && buf[i] != '\0' && i <= 1024)
 		{
 		  tab[j][0][e] = buf[i];
 		  ++e;
 		  ++i;
 		}
-	      printk(KERN_INFO "0 %s\n", tab[j][0]);
-	      while (buf[i] == ' ' && buf[i] != '\0')
+	      ++i;
+	      while (buf[i] == ' ' && buf[i] != '\0' && i <= 1024)
 		{
 		  ++i;
 		}
 	      e = 0;
-	      memset(tab[j][1], 0, 64);
-	      while (buf[i] != ' ' && buf[i] != '\0')
+	      memset(tab[j][1], 0, 32);
+	      while (buf[i] != ' ' && buf[i] != '\0' && i <= 1024)
 		{
 		  tab[j][1][e] = buf[i];
 		  ++e;
 		  ++i;
 		}
-	      printk(KERN_INFO "1 %s\n", tab[j][1]);
-	      while (buf[i] == ' ' && buf[i] != '\0')
+	      while (buf[i] == ' ' && buf[i] != '\0' && i <= 1024)
 		{
 		  ++i;
 		}
 	      c = 2;
-	      while (c != 9)
+	      while (c != 9 && i <= 1024)
 		{
 		  get_next_number_pos(buf, &i);
 		  ++c;
 		}
 	      e = 0;
-	      memset(tab[j][0], 0, 64);
-              while (buf[i] != ' ' && buf[i] != '\0')
+	      memset(tab[j][2], 0, 32);
+              while (buf[i] != ' ' && buf[i] != '\0' && i <= 1024)
                 {
                   tab[j][2][e] = buf[i];
                   ++e;
                   ++i;
                 }
-	      printk(KERN_INFO "2 %s\n", tab[j][2]);
 	      --i;
 	      n = 1;
+	      ++j;
 	    }
 	  ++i;
-	  ++j;
+	  
 	}
       ++i;
     }
-  //  return (tab);
+  return (count);
 }
 
 static int		__init sysinfo_init(void)
@@ -178,6 +179,9 @@ static int		__init sysinfo_init(void)
   struct file		*ffd;
   char			*buf;
   char			str[64];
+  char			tab[8][3][32];
+  int			count;
+  int			i;
 
   buf = kmalloc(1024, GFP_KERNEL);
   memset(buf, 0, 1024);
@@ -196,7 +200,14 @@ static int		__init sysinfo_init(void)
   memset(buf, 0, 1024);
   ffd = file_open(networkinfo, O_RDONLY, 0);
   file_read(ffd, ffd->f_pos, buf, 1023);
-  get_network_from_netdev(buf);
+  count = get_network_from_netdev(buf, tab);
+  i = 0;
+  while (i != count)
+    {
+      printk(KERN_INFO "%s\nReceive\t: %s o\nTrasnmit\t: %s o\n", tab[i][0], tab[i][1], tab[i][2]);
+      ++i;
+    }
+  file_close(ffd);
 
   si_meminfo(&si);
   printk(KERN_INFO "total memory\t: %lu Mo\n", si.totalram);
