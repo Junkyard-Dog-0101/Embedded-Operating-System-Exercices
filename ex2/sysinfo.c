@@ -9,6 +9,15 @@
 #include <asm/segment.h>
 #include <asm/uaccess.h>
 #include <linux/buffer_head.h>
+#include <linux/cpumask.h>
+#include <linux/interrupt.h>
+#include <linux/kernel_stat.h>
+#include <linux/proc_fs.h>
+#include <linux/sched.h>
+#include <linux/seq_file.h>
+#include <linux/time.h>
+#include <asm/cputime.h>
+#include <linux/tick.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("vesy_j");
@@ -170,7 +179,7 @@ int	get_network_from_netdev(char *buf, char tab[8][3][32])
   return (count);
 }
 
-static int		__init sysinfo_init(void)
+static int	show_stat(struct seq_file *p, void *v)
 {
   const char		*cpuinfo = "/proc/cpuinfo";
   //const char		*cpuusage = "/proc/stat";
@@ -187,14 +196,15 @@ static int		__init sysinfo_init(void)
   memset(buf, 0, 1024);
   ffd = file_open(cpuinfo, O_RDONLY, 0);
   file_read(ffd, ffd->f_pos, buf, 1023);
+  seq_printf(p, "PROCESSOR\n");
   get_info_from_cpuinfo(buf, str, "model name"); 
-  printk(KERN_INFO "%s\n", str);
+  seq_printf(p, "%s\n", str);
   get_info_from_cpuinfo(buf, str, "cpu cores"); 
-  printk(KERN_INFO "%s\n", str);
+  seq_printf(p, "%s\n", str);
   get_info_from_cpuinfo(buf, str, "cpu MHz"); 
-  printk(KERN_INFO "%s\n", str);
+  seq_printf(p, "%s\n", str);
   get_info_from_cpuinfo(buf, str, "cache size");
-  printk(KERN_INFO "%s\n", str);
+  seq_printf(p, "%s\n", str);
   file_close(ffd);
 
   memset(buf, 0, 1024);
@@ -202,25 +212,51 @@ static int		__init sysinfo_init(void)
   file_read(ffd, ffd->f_pos, buf, 1023);
   count = get_network_from_netdev(buf, tab);
   i = 0;
+
+  seq_printf(p, "\nNETWORK\n");
   while (i != count)
     {
-      printk(KERN_INFO "%s\nReceive\t: %s o\nTrasnmit\t: %s o\n", tab[i][0], tab[i][1], tab[i][2]);
+      seq_printf(p, "name\t\t: %s\nReceive\t\t: %s byte(s)\nTrasnmit\t: %s byte(s)\n", tab[i][0], tab[i][1], tab[i][2]);
       ++i;
     }
   file_close(ffd);
 
+  seq_printf(p, "\nMEMORY\n");
   si_meminfo(&si);
-  printk(KERN_INFO "total memory\t: %lu Mo\n", si.totalram);
-  printk(KERN_INFO "free memory\t: %lu Mo\n", si.freeram);
-  printk(KERN_INFO "shared memory\t: %lu Mo\n", si.sharedram);
-  printk(KERN_INFO "uptime\t\t: %lu seconds\n", si.uptime);
+  seq_printf(p, "total memory\t: %lu MB\n", si.totalram);
+  seq_printf(p, "free memory\t: %lu MB\n", si.freeram);
+  seq_printf(p, "shared memory\t: %lu MB\n", si.sharedram);
+  seq_printf(p, "uptime\t\t: %lu seconds\n", si.uptime);
   kfree(buf);
+  return (0);
+}
+
+static int	stat_open(struct inode *inode, struct file *file)
+{
+  int		res;
+
+  res = single_open(file, show_stat, NULL);
+  return (res);
+}
+
+static const struct file_operations	proc_stat_operations = {
+  .open = stat_open,
+  .read = seq_read,
+  .llseek = seq_lseek,
+  .release = single_release,
+};
+
+static int	__init sysinfo_init(void)
+{
+  proc_create("mystat", 0, NULL, &proc_stat_operations);
+  printk(KERN_INFO "sysinfo module started\n");
   return (0);
 }
 
 static void	__exit sysinfo_cleanup(void)
 {
-  printk(KERN_INFO "Cleaning up module.\n");
+  remove_proc_entry("mystat",NULL);
+  printk(KERN_INFO "sysinfo module ended\n");
 }
 
 module_init(sysinfo_init);
