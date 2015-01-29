@@ -1,5 +1,5 @@
+#!/bin/bash
 make
-sudo insmod sysinfo.ko
-dmesg
 sudo rmmod sysinfo.ko
-make clean
+sudo insmod sysinfo.ko
+cat /proc/mysysinfo

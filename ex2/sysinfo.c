@@ -79,9 +79,72 @@ int	get_info_from_cpuinfo(char *src, char *buf, char *key)
   return (0);
 }
 
-/*int	get_usage_from_cpustat(char *src, char *buf, char *key)
+int	get_usage_from_cpustat(struct seq_file *p, void *v)
 {
-}*/
+  int	i;
+  u64	user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
+
+  user = nice = system = idle = iowait = irq = softirq = steal = guest = guest_nice = 0;
+  for_each_possible_cpu(i)
+  {
+    user += kcpustat_cpu(i).cpustat[CPUTIME_USER];
+    nice += kcpustat_cpu(i).cpustat[CPUTIME_NICE];
+    system += kcpustat_cpu(i).cpustat[CPUTIME_SYSTEM];
+    irq += kcpustat_cpu(i).cpustat[CPUTIME_IRQ];
+    softirq += kcpustat_cpu(i).cpustat[CPUTIME_SOFTIRQ];
+    steal += kcpustat_cpu(i).cpustat[CPUTIME_STEAL];
+    guest += kcpustat_cpu(i).cpustat[CPUTIME_GUEST];
+    guest_nice += kcpustat_cpu(i).cpustat[CPUTIME_GUEST_NICE];
+  }
+  seq_puts(p, "cpu\t\t:");
+  seq_puts(p, " user");
+  seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(user));
+  seq_puts(p, " nice");
+  seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(nice));
+  seq_puts(p, " sys");
+  seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(system));
+  seq_puts(p, " irq");
+  seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(irq));
+  seq_puts(p, " sirq");
+  seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(softirq));
+  seq_puts(p, " steal");
+  seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(steal));
+  seq_puts(p, " guest");
+  seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(guest));
+  seq_puts(p, " gnice");
+  seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(guest_nice));
+  seq_putc(p, '\n');
+  for_each_online_cpu(i)
+  {
+    user = kcpustat_cpu(i).cpustat[CPUTIME_USER];
+    nice = kcpustat_cpu(i).cpustat[CPUTIME_NICE];
+    system = kcpustat_cpu(i).cpustat[CPUTIME_SYSTEM];
+    irq = kcpustat_cpu(i).cpustat[CPUTIME_IRQ];
+    softirq = kcpustat_cpu(i).cpustat[CPUTIME_SOFTIRQ];
+    steal = kcpustat_cpu(i).cpustat[CPUTIME_STEAL];
+    guest = kcpustat_cpu(i).cpustat[CPUTIME_GUEST];
+    guest_nice = kcpustat_cpu(i).cpustat[CPUTIME_GUEST_NICE];
+    seq_printf(p, "cpu%d\t\t:", i);
+    seq_puts(p, " user");
+    seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(user));
+    seq_puts(p, " nice");
+    seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(nice));
+    seq_puts(p, " sys");
+    seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(system));
+    seq_puts(p, " irq");
+    seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(irq));
+    seq_puts(p, " sirq");
+    seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(softirq));
+    seq_puts(p, " steal");
+    seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(steal));
+    seq_puts(p, " guest");
+    seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(guest));
+    seq_puts(p, " gnice");
+    seq_put_decimal_ull(p, ' ', cputime64_to_clock_t(guest_nice));
+    seq_putc(p, '\n');
+  }
+  return (0);
+}
 
 void	get_next_number_pos(char *buf, int *i)
 {
@@ -182,7 +245,6 @@ int	get_network_from_netdev(char *buf, char tab[8][3][32])
 static int	show_stat(struct seq_file *p, void *v)
 {
   const char		*cpuinfo = "/proc/cpuinfo";
-  //const char		*cpuusage = "/proc/stat";
   const char		*networkinfo = "/proc/net/dev";
   struct sysinfo	si;
   struct file		*ffd;
@@ -206,6 +268,9 @@ static int	show_stat(struct seq_file *p, void *v)
   get_info_from_cpuinfo(buf, str, "cache size");
   seq_printf(p, "%s\n", str);
   file_close(ffd);
+
+
+  get_usage_from_cpustat(p, v);
 
   memset(buf, 0, 1024);
   ffd = file_open(networkinfo, O_RDONLY, 0);
@@ -248,7 +313,7 @@ static const struct file_operations	proc_stat_operations = {
 
 static int	__init sysinfo_init(void)
 {
-  proc_create("mystat", 0, NULL, &proc_stat_operations);
+  proc_create("mysysinfo", 0, NULL, &proc_stat_operations);
   printk(KERN_INFO "sysinfo module started\n");
   return (0);
 }
